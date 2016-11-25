@@ -4,7 +4,7 @@ runtime: python27
 api_version: 1
 threadsafe: yes
 
-handlers:       # static then dynamic
+handlers:
 
 - url: /favicon\.ico
   static_files: favicon.ico

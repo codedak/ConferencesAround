@@ -115,19 +115,13 @@ class ConferenceApi(remote.Service):
 
     def _getProfileFromUser(self):
         """Return user Profile from datastore, creating new one if non-existent."""
-        ## TODO 2
-        ## step 1: make sure user is authed
-        ## uncomment the following lines:
         user = endpoints.get_current_user()
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
         user_id = getUserId(user)
         p_key = ndb.Key(Profile, user_id)
         profile = p_key.get()
-        #profile = None
-        ## step 2: create a new Profile from logged in user data
-        ## you can use user.nickname() to get displayName
-        ## and user.email() to get mainEmail
+        
         if not profile:
             profile = Profile(
                 #userId = None,
@@ -138,12 +132,11 @@ class ConferenceApi(remote.Service):
             )
             profile.put()
 
-        return profile      # return Profile
+        return profile
 
 
     def _doProfile(self, save_request=None):
         """Get user Profile and return to user, possibly updating it first."""
-        # get user Profile
         prof = self._getProfileFromUser()
 
         # if saveProfile(), process user-modifyable fields
@@ -178,7 +171,6 @@ class ConferenceApi(remote.Service):
 
     def _createConferenceObject(self, request):
         """Create or update Conference object, returning ConferenceForm/request."""
-        # preload necessary data items
         user = endpoints.get_current_user()
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
@@ -215,9 +207,7 @@ class ConferenceApi(remote.Service):
 
         # make Profile Key from user ID
         p_key = ndb.Key(Profile, user_id)
-        # allocate new Conference ID with Profile key as parent
         c_id = Conference.allocate_ids(size=1, parent=p_key)[0]
-        # make Conference key from ID
         c_key = ndb.Key(Conference, c_id, parent=p_key)
         data['key'] = c_key
         data['organizerUserId'] = request.organizerUserId = user_id
@@ -386,9 +376,6 @@ class ConferenceApi(remote.Service):
         """Return user profile."""
         return self._doProfile()
 
-    # TODO 1
-    # 1. change request class
-    # 2. pass request to _doProfile function
     @endpoints.method(ProfileMiniForm, ProfileForm,
             path='profile', http_method='POST', name='saveProfile')
     def saveProfile(self, request):
@@ -467,17 +454,11 @@ class ConferenceApi(remote.Service):
             http_method='GET', name='getConferencesToAttend')
     def getConferencesToAttend(self, request):
         """Get list of conferences that user has registered for."""
-        # TODO:
-        # step 1: get user profile
         prof = self._getProfileFromUser()
-        # step 2: get conferenceKeysToAttend from profile.
         # to make a ndb key from websafe key you can use:
         # ndb.Key(urlsafe=my_websafe_key_string)
         conf_keys = [ndb.Key(urlsafe=wsck) for wsck in prof.conferenceKeysToAttend]
         conferences = ndb.get_multi(conf_keys)
-        # step 3: fetch conferences from datastore. 
-        # Use get_multi(array_of_keys) to fetch all keys at once.
-        # Do not fetch them one by one!
         # get organizers
         organisers = [ndb.Key(Profile, conf.organizerUserId) for conf in conferences]
         profiles = ndb.get_multi(organisers)
@@ -502,7 +483,6 @@ class ConferenceApi(remote.Service):
         q = q.filter(Conference.topics=="Medical Innovations")
         q = q.order(Conference.name)
         q = q.order(Conference.month)
-        #q = q.filter(Conference.month==6)
 
         return ConferenceForms(
             items=[self._copyConferenceToForm(conf, "") for conf in q]
@@ -523,6 +503,7 @@ class ConferenceApi(remote.Service):
             #    'Last chance to attend! The following conferences '
             #    'are nearly sold out:',
             #    ', '.join(conf.name for conf in confs))
+            #-------------------OR-----------------------
             announcement = ANNOUNCEMENT_TPL % (
                 ', '.join(conf.name for conf in confs))
             memcache.set(MEMCACHE_ANNOUNCEMENTS_KEY, announcement)
